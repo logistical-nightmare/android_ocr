@@ -42,6 +42,12 @@ var decide = true
 var inhouse = ""
 var vendor = ""
 
+fun calculateMatchPercentage(str1: String, str2: String): Int {
+    val maxLength = maxOf(str1.length, str2.length)
+    val matchLength = str1.zip(str2).count { it.first == it.second }
+    return (matchLength.toDouble() / maxLength * 100).toInt()
+}
+
 fun modifyText(originalText: String): String {
     val lines = originalText.lines()
     val batchRegex = "Batch: ([\\w\\-_]{6,})".toRegex()
@@ -52,12 +58,14 @@ fun modifyText(originalText: String): String {
             val matchResult = batchRegex.find(line)
             if (matchResult != null) {
                 decide = false
+                vendor = matchResult.groups[1]?.value ?: ""
                 return matchResult.groups[1]?.value ?: ""
             }
         } else {
             val matchResult = vendBatchRegex.find(line)
             if (matchResult != null) {
                 decide = true
+                inhouse = matchResult.groups[1]?.value ?: ""
                 return matchResult.groups[1]?.value ?: ""
             }
         }
@@ -116,6 +124,22 @@ class MainActivity : ComponentActivity() {
         val viewModel = viewModel<MainViewModel>()
         val bitmaps by viewModel.bitmaps.collectAsState()
 
+        // Calculate match percentage
+        var matchPercentage by remember { mutableStateOf(0) }
+        var backgroundColor by remember { mutableStateOf(Color.LightGray) }
+
+        if (inhouse.isNotEmpty() && vendor.isNotEmpty()) {
+            matchPercentage = calculateMatchPercentage(inhouse, vendor)
+            backgroundColor = when {
+                matchPercentage == 100 -> Color.Green
+                matchPercentage in 80 until 100 -> Color.Yellow
+                else -> Color.Red
+            }
+        }
+
+
+
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -125,11 +149,29 @@ class MainActivity : ComponentActivity() {
         ) {
             // Title for OCR
             Text(
-                text = "OCR Results",
+                text = "OCR",
                 style = TextStyle(fontSize = 24.sp),
                 modifier = Modifier
-                    .padding(bottom = 100.dp)
+                    .padding(bottom = 50.dp)
             )
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(20.dp) // Adjust height as needed
+                    .background(backgroundColor) // Set background color based on match percentage
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = "Match Results")
+                    if (inhouse.isNotEmpty() && vendor.isNotEmpty()) {
+                        Text(text = "Match Percentage: $matchPercentage%")
+                    }
+                }
+            }
 
             // Box to display camera feed
             Box(
