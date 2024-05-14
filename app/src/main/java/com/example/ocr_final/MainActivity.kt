@@ -39,6 +39,7 @@ import com.example.ocr_final.ui.theme.Ocr_finalTheme
 import kotlinx.coroutines.launch
 
 var decide = true
+var state = 1
 var inhouse = ""
 var vendor = ""
 
@@ -50,50 +51,48 @@ fun calculateMatchPercentage(str1: String, str2: String): Int {
 
 fun modifyText(originalText: String): String {
     val lines = originalText.lines()
-    val batchRegex = "Batch: ([\\w\\-_]{6,})".toRegex()
+    val batchRegex = "Batch: (?!.*Vend\\.Batch)([\\w\\-_]{6,})".toRegex()
     val vendBatchRegex = "Vend\\.Batch: ([\\w\\-_]{6,})".toRegex()
 
     for (line in lines) {
         if (decide) {
-            val matchResult = batchRegex.find(line)
-            if (matchResult != null) {
+            val batchMatch = batchRegex.find(line)
+            if (batchMatch != null) {
                 decide = false
-                vendor = matchResult.groups[1]?.value ?: ""
-                return matchResult.groups[1]?.value ?: ""
+                state += 1
+                vendor = batchMatch.groups[1]?.value ?: ""
+                return batchMatch.groups[1]?.value ?: ""
             }
         } else {
-            val matchResult = vendBatchRegex.find(line)
-            if (matchResult != null) {
+            val vendBatchMatch = vendBatchRegex.find(line)
+            if (vendBatchMatch != null) {
+                state += 1
                 decide = true
-                inhouse = matchResult.groups[1]?.value ?: ""
-                return matchResult.groups[1]?.value ?: ""
+                inhouse = vendBatchMatch.groups[1]?.value ?: ""
+                return vendBatchMatch.groups[1]?.value ?: ""
             }
         }
     }
 
-    // If no match is found according to the rules, return the uppercase version of the original text
-    decide = !decide
-    return originalText.uppercase()
+    return "No Match"
 }
+
 
 
 @Composable
 fun ImageTextList(bitmaps: List<Bitmap>, viewModel: MainViewModel) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(bitmaps) { bitmap ->
-            var extractedText by remember { mutableStateOf("") }
-            LaunchedEffect(bitmap) {
-                viewModel.extractTextFromImage(bitmap) { text ->
-                    extractedText = modifyText(text)
-                }
+    var extractedText by remember { mutableStateOf("") }
+
+    LaunchedEffect(bitmaps.lastOrNull()) {
+        val lastBitmap = bitmaps.lastOrNull()
+        if (lastBitmap != null) {
+            viewModel.extractTextFromImage(lastBitmap) { text ->
+                extractedText = modifyText(text)
             }
-            Text(
-                text = extractedText,
-                modifier = Modifier.padding(16.dp)
-            )
         }
     }
 }
+
 
 
 class MainActivity : ComponentActivity() {
@@ -138,27 +137,37 @@ class MainActivity : ComponentActivity() {
         }
 
 
-
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp), // Add padding for better spacing
-            verticalArrangement = Arrangement.Center,
+                .padding(horizontal = 16.dp, vertical = 32.dp), // Increased vertical padding for better spacing
+            verticalArrangement = Arrangement.SpaceAround, // Adjust vertical arrangement for better distribution
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Title for OCR
             Text(
                 text = "OCR",
                 style = TextStyle(fontSize = 24.sp),
-                modifier = Modifier
-                    .padding(bottom = 50.dp)
+                modifier = Modifier.padding(bottom = 40.dp) // Increased bottom padding for separation
             )
 
+            // Box to display camera feed
             Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .height(20.dp) // Adjust height as needed
+                    .size(300.dp) // Adjust size as needed
+                    .background(Color.Gray) // Placeholder background color
+            ) {
+                CameraPreview(controller = controller, modifier = Modifier.fillMaxSize())
+            }
+
+            // Spacer to add more space between camera feed and match results
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Match Results Box
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp) // Adjust height as needed
                     .background(backgroundColor) // Set background color based on match percentage
             ) {
                 Column(
@@ -173,68 +182,78 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Box to display camera feed
-            Box(
-                modifier = Modifier
-                    .size(300.dp) // Adjust size as needed
-                    .background(Color.Gray) // Placeholder background color
-            ) {
-                CameraPreview(controller = controller, modifier = Modifier.fillMaxSize())
-            }
-
-            // Spacer to add more space between camera feed and text boxes
-            Spacer(modifier = Modifier.height(100.dp))
+            // Spacer to add more space between match results and extracted text boxes
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Row to show extracted text
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Box for extracted text 1
+                // Box for extracted text 1 (Vendor)
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(100.dp) // Adjust height as needed
+                        .height(50.dp) // Adjust height as needed
                         .background(Color.LightGray) // Placeholder background color
                 ) {
-                    Text(text = "Vendor")
-                    if (decide) {
-                        ImageTextList(bitmaps, viewModel)
+                    Column {
+                        Text(text = "Vendor")
+                        if (decide) {
+                            ImageTextList(bitmaps, viewModel)
+                        }
+                        Text(text =vendor)
                     }
                 }
 
                 // Spacer to add some space between text boxes
                 Spacer(modifier = Modifier.width(16.dp))
 
-                // Box for extracted text 2
+                // Box for extracted text 2 (Inhouse)
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(100.dp) // Adjust height as needed
-                        .background(Color.LightGray) // Placeholder background color
+                        .height(50.dp) // Adjust height as needed
+                        .background(Color.LightGray) // Placeholder background color]
                 ) {
-                    Text(text = "Inhouse")
-                    if (!decide) {
-                        ImageTextList(bitmaps, viewModel)
+                    Column{
+                        Text(text = "Inhouse")
+                        if (!decide) {
+                            ImageTextList(bitmaps, viewModel)
+                        }
+                        Text(text =inhouse)
                     }
                 }
             }
 
             // Spacer to add some space between text boxes and button
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Button to capture image from camera
             Button(
                 onClick = {
-                    takePhoto(controller = controller, onPhotoTaken = { bitmap ->
-                        viewModel.onTakePhoto(bitmap)
-                    })
+                    if (state == 1 || state == 2) {
+                        takePhoto(controller = controller, onPhotoTaken = { bitmap ->
+                            viewModel.onTakePhoto(bitmap)
+                        })
+                    }
+                    else if (state == 3){
+                        inhouse = ""
+                        vendor = ""
+                        decide = true
+                        state+=1
+                    }
+                    else {
+                        state = 1
+
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = "Capture Image")
             }
         }
+
     }
 
 
