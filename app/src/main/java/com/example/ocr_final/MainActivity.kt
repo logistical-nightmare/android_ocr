@@ -38,7 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ocr_final.ui.theme.Ocr_finalTheme
 import kotlinx.coroutines.launch
 
-var decide = true
+var state = 4
 var inhouse = ""
 var vendor = ""
 
@@ -54,18 +54,17 @@ fun modifyText(originalText: String): String {
     val vendBatchRegex = "(?i).*vend.*([\\w\\d]{10,}).*".toRegex()
 
     for (line in lines) {
-        if (decide) {
+        if (state == 1) {
             val batchMatch = batchRegex.find(line)
             if (batchMatch != null) {
-                decide = false
                 vendor = batchMatch.groups[1]?.value ?: "No Match"
                 Log.d("vendor", vendor)
                 return vendor
             }
-        } else {
+        }
+        if (state == 2){
             val vendBatchMatch = vendBatchRegex.find(line)
             if (vendBatchMatch != null) {
-                decide = true
                 inhouse = vendBatchMatch.groups[1]?.value ?: "No Match"
                 Log.d("inhouse", inhouse)
                 return inhouse
@@ -73,20 +72,20 @@ fun modifyText(originalText: String): String {
         }
     }
 
-    Log.d("no match", "no match")
-    return "No Match"
+    return ""
 }
 
 
 @Composable
 fun ImageTextList(bitmaps: List<Bitmap>, viewModel: MainViewModel) {
     var extractedText by remember { mutableStateOf("") }
-
-    LaunchedEffect(bitmaps.lastOrNull()) {
-        val lastBitmap = bitmaps.lastOrNull()
-        if (lastBitmap != null) {
-            viewModel.extractTextFromImage(lastBitmap) { text ->
-                extractedText = modifyText(text)
+    if (state == 1 || state == 2) {
+        LaunchedEffect(bitmaps.lastOrNull()) {
+            val lastBitmap = bitmaps.lastOrNull()
+            if (lastBitmap != null) {
+                viewModel.extractTextFromImage(lastBitmap) { text ->
+                    extractedText = modifyText(text)
+                }
             }
         }
     }
@@ -126,7 +125,14 @@ class MainActivity : ComponentActivity() {
         var matchPercentage by remember { mutableStateOf(0) }
         var backgroundColor by remember { mutableStateOf(Color.LightGray) }
 
-        if (inhouse.isNotEmpty() && vendor.isNotEmpty()) {
+        if (state == 4) {
+            inhouse = ""
+            vendor = ""
+            matchPercentage = 0
+            backgroundColor = Color.LightGray
+        }
+
+        if (state == 3) {
             matchPercentage = calculateMatchPercentage(inhouse, vendor)
             backgroundColor = when {
                 matchPercentage == 100 -> Color.Green
@@ -198,9 +204,9 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Column {
                         Text(text = "Vendor")
-                        if (decide) {
-                            ImageTextList(bitmaps, viewModel)
-                        }
+
+                        ImageTextList(bitmaps, viewModel)
+
                         Text(text =vendor)
                     }
                 }
@@ -217,9 +223,9 @@ class MainActivity : ComponentActivity() {
                 ) {
                     Column{
                         Text(text = "Inhouse")
-                        if (!decide) {
-                            ImageTextList(bitmaps, viewModel)
-                        }
+
+                        ImageTextList(bitmaps, viewModel)
+
                         Text(text =inhouse)
                     }
                 }
@@ -234,6 +240,12 @@ class MainActivity : ComponentActivity() {
                     takePhoto(controller = controller, onPhotoTaken = { bitmap ->
                         viewModel.onTakePhoto(bitmap)
                     })
+                    if (state == 4) {
+                        state = 1
+                    }
+                    else {
+                        state += 1
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -289,5 +301,4 @@ class MainActivity : ComponentActivity() {
             Manifest.permission.RECORD_AUDIO,
         )
     }
-
 }
