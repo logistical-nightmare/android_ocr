@@ -39,7 +39,6 @@ import com.example.ocr_final.ui.theme.Ocr_finalTheme
 import kotlinx.coroutines.launch
 
 var decide = true
-var state = 1
 var inhouse = ""
 var vendor = ""
 
@@ -51,32 +50,32 @@ fun calculateMatchPercentage(str1: String, str2: String): Int {
 
 fun modifyText(originalText: String): String {
     val lines = originalText.lines()
-    val batchRegex = "Batch: (?!.*Vend\\.Batch)([\\w\\-_]{6,})".toRegex()
-    val vendBatchRegex = "Vend\\.Batch: ([\\w\\-_]{6,})".toRegex()
+    val batchRegex = "(?i).*batch.*([\\w\\d]{10,}).*".toRegex()
+    val vendBatchRegex = "(?i).*vend.*([\\w\\d]{10,}).*".toRegex()
 
     for (line in lines) {
         if (decide) {
             val batchMatch = batchRegex.find(line)
             if (batchMatch != null) {
                 decide = false
-                state += 1
-                vendor = batchMatch.groups[1]?.value ?: ""
-                return batchMatch.groups[1]?.value ?: ""
+                vendor = batchMatch.groups[1]?.value ?: "No Match"
+                Log.d("vendor", vendor)
+                return vendor
             }
         } else {
             val vendBatchMatch = vendBatchRegex.find(line)
             if (vendBatchMatch != null) {
-                state += 1
                 decide = true
-                inhouse = vendBatchMatch.groups[1]?.value ?: ""
-                return vendBatchMatch.groups[1]?.value ?: ""
+                inhouse = vendBatchMatch.groups[1]?.value ?: "No Match"
+                Log.d("inhouse", inhouse)
+                return inhouse
             }
         }
     }
 
+    Log.d("no match", "no match")
     return "No Match"
 }
-
 
 
 @Composable
@@ -232,21 +231,9 @@ class MainActivity : ComponentActivity() {
             // Button to capture image from camera
             Button(
                 onClick = {
-                    if (state == 1 || state == 2) {
-                        takePhoto(controller = controller, onPhotoTaken = { bitmap ->
-                            viewModel.onTakePhoto(bitmap)
-                        })
-                    }
-                    else if (state == 3){
-                        inhouse = ""
-                        vendor = ""
-                        decide = true
-                        state+=1
-                    }
-                    else {
-                        state = 1
-
-                    }
+                    takePhoto(controller = controller, onPhotoTaken = { bitmap ->
+                        viewModel.onTakePhoto(bitmap)
+                    })
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
