@@ -123,13 +123,13 @@ class MainActivity : ComponentActivity() {
         val bitmaps by viewModel.bitmaps.collectAsState()
 
         // Calculate match percentage
-        var matchPercentage by remember { mutableStateOf(0) }
+        var matchPercentage by remember { mutableStateOf<Int?>(null) }
         var backgroundColor by remember { mutableStateOf(Color.LightGray) }
 
         if (state == 4) {
             inhouse = ""
             vendor = ""
-            matchPercentage = 0
+            matchPercentage = null
             backgroundColor = Color.LightGray
         }
 
