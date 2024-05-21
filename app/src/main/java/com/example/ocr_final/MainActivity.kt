@@ -51,30 +51,56 @@ fun calculateMatchPercentage(str1: String, str2: String): Int {
 
 fun modifyText(originalText: String): String {
     val lines = originalText.lines()
-    val batchRegex = "(?i).*batch.*([\\w\\d]{10,}).*".toRegex()
-    val vendBatchRegex = "(?i).*vend.*([\\w\\d]{10,}).*".toRegex()
+    val codeRegex = "\\b(?=.*\\d)[:\\w\\d]{10,}\\b".toRegex()
+    var highestMatchPercentage = 0.0
+    var bestMatch = ""
 
-    for (line in lines) {
-        if (state == 1) {
-            val batchMatch = batchRegex.find(line)
-            if (batchMatch != null) {
-                vendor = batchMatch.groups[1]?.value ?: "No Match"
-                Log.d("vendor", vendor)
-                return vendor
-            }
-        }
-        if (state == 2){
-            val vendBatchMatch = vendBatchRegex.find(line)
-            if (vendBatchMatch != null) {
-                inhouse = vendBatchMatch.groups[1]?.value ?: "No Match"
-                Log.d("inhouse", inhouse)
-                return inhouse
+    val keyword = when (state) {
+        1 -> "batch"
+        2 -> "vend"
+        else -> ""
+    }
+
+    for (i in lines.indices) {
+        val line = lines[i].trim()
+
+        val matches = codeRegex.findAll(line)
+        Log.d("matches", matches.toString())
+        for (match in matches) {
+            val code = match.value
+            val matchPercentage2 = calculateMatchPercentage2(line, keyword)
+            Log.d("percentage", "$line $keyword $matchPercentage2")
+
+            if (matchPercentage2 >= highestMatchPercentage) {
+                highestMatchPercentage = matchPercentage2
+                bestMatch = code
+                if(state == 1){
+                    vendor = bestMatch
+                }
+                else if (state == 2) {
+                    inhouse = bestMatch
+                }
             }
         }
     }
 
-    return ""
+    Log.d("BestMatch", bestMatch)
+    return bestMatch
 }
+
+fun calculateMatchPercentage2(code: String, keyword: String): Double {
+    if (keyword.isEmpty()) return 0.0
+
+    val keywordChars = keyword.toCharArray().toSet()
+    val codeChars = code.toCharArray().toSet()
+
+    val intersection = keywordChars.intersect(codeChars).size
+    val union = keywordChars.union(codeChars).size
+
+    return if (union == 0) 0.0 else (intersection.toDouble() / union) * 100
+}
+
+
 
 
 @Composable
