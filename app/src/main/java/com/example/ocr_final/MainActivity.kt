@@ -16,6 +16,7 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -174,6 +175,7 @@ class MainActivity : ComponentActivity() {
                     .fillMaxWidth()
                     .height(60.dp) // Adjust height as needed
                     .background(backgroundColor) // Set background color based on match percentage
+                    .border(if (state == 2) 2.dp else 0.dp, if (state == 2) Color.Blue else Color.Transparent)
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -201,6 +203,7 @@ class MainActivity : ComponentActivity() {
                         .weight(1f)
                         .height(50.dp) // Adjust height as needed
                         .background(Color.LightGray) // Placeholder background color
+                        .border(if (state == 4) 2.dp else 0.dp, if (state == 4) Color.Blue else Color.Transparent)
                 ) {
                     Column {
                         Text(text = "Vendor")
@@ -220,6 +223,7 @@ class MainActivity : ComponentActivity() {
                         .weight(1f)
                         .height(50.dp) // Adjust height as needed
                         .background(Color.LightGray) // Placeholder background color]
+                        .border(if (state == 1) 2.dp else 0.dp, if (state == 1) Color.Blue else Color.Transparent)
                 ) {
                     Column{
                         Text(text = "Inhouse")
