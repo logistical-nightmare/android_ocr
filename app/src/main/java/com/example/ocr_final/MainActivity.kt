@@ -56,9 +56,9 @@ fun modifyText(originalText: String): String {
     var bestMatch = ""
 
     val keyword = when (state) {
-        1 -> "batch"
-        2 -> "vend"
-        else -> ""
+        1 -> listOf("batch", "lot", "p.o.")
+        2 -> listOf("vend")
+        else -> listOf("")
     }
 
     for (i in lines.indices) {
@@ -68,7 +68,7 @@ fun modifyText(originalText: String): String {
         Log.d("matches", matches.toString())
         for (match in matches) {
             val code = match.groupValues[1] // Capture the part after the colon
-            val matchPercentage2 = calculateMatchPercentage2(line, keyword)
+            val matchPercentage2 = calculateHighestMatchPercentage(line, keyword)
             Log.d("percentage", "$line $keyword $matchPercentage2")
 
             if (matchPercentage2 >= highestMatchPercentage) {
@@ -88,16 +88,31 @@ fun modifyText(originalText: String): String {
 }
 
 
-fun calculateMatchPercentage2(code: String, keyword: String): Double {
-    if (keyword.isEmpty()) return 0.0
+fun calculateHighestMatchPercentage(code: String, keywords: List<String>): Double {
+    if (keywords.isEmpty()) return 0.0
 
-    val keywordChars = keyword.toCharArray().toSet()
-    val codeChars = code.toCharArray().toSet()
+    // Initialize variable to keep track of the highest match percentage
+    var highestMatchPercentage = 0.0
 
-    val intersection = keywordChars.intersect(codeChars).size
-    val union = keywordChars.union(codeChars).size
+    // Iterate through each keyword in the list
+    for (keyword in keywords) {
+        if (keyword.isNotEmpty()) {
+            val keywordChars = keyword.toCharArray().toSet()
+            val codeChars = code.toCharArray().toSet()
 
-    return if (union == 0) 0.0 else (intersection.toDouble() / union) * 100
+            val intersection = keywordChars.intersect(codeChars).size
+            val union = keywordChars.union(codeChars).size
+
+            val matchPercentage = if (union == 0) 0.0 else (intersection.toDouble() / union) * 100
+
+            // Update the highest match percentage if the current one is higher
+            if (matchPercentage > highestMatchPercentage) {
+                highestMatchPercentage = matchPercentage
+            }
+        }
+    }
+
+    return highestMatchPercentage
 }
 
 
