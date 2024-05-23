@@ -10,7 +10,6 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.annotation.RequiresApi
-import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
@@ -18,18 +17,12 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cameraswitch
-import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -39,105 +32,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ocr_final.ui.theme.Ocr_finalTheme
 import kotlinx.coroutines.launch
 
-var state = 4
-var inhouse = ""
-var vendor = ""
-
 fun calculateMatchPercentage(str1: String, str2: String): Int {
     val maxLength = maxOf(str1.length, str2.length)
     val matchLength = str1.zip(str2).count { it.first == it.second }
     return (matchLength.toDouble() / maxLength * 100).toInt()
 }
 
-fun modifyText(originalText: String): String {
-    val lines = originalText.lines()
-    val codeRegex = "(?:.*?:\\s*|\\s+)(?=.*\\d)([\\w\\d]{10,})\\b".toRegex()
-    var highestMatchPercentage = 0.0
-    var bestMatch = ""
-
-    val keyword = when (state) {
-        1 -> listOf("batch", "lot", "p.o.")
-        2 -> listOf("vend")
-        else -> listOf("")
-    }
-
-    for (i in lines.indices) {
-        val line = lines[i].trim()
-
-        val matches = codeRegex.findAll(line)
-        Log.d("matches", matches.toString())
-        for (match in matches) {
-            val code = match.groupValues[1] // Capture the part after the colon
-            val matchPercentage2 = calculateHighestMatchPercentage(line, keyword)
-            Log.d("percentage", "$line $keyword $matchPercentage2")
-
-            if (matchPercentage2 >= highestMatchPercentage) {
-                highestMatchPercentage = matchPercentage2
-                bestMatch = code
-                if (state == 1) {
-                    vendor = bestMatch
-                } else if (state == 2) {
-                    inhouse = bestMatch
-                }
-            }
-        }
-    }
-
-    Log.d("BestMatch", bestMatch)
-    return bestMatch
-}
-
-
-fun calculateHighestMatchPercentage(code: String, keywords: List<String>): Double {
-    if (keywords.isEmpty()) return 0.0
-
-    // Initialize variable to keep track of the highest match percentage
-    var highestMatchPercentage = 0.0
-
-    // Iterate through each keyword in the list
-    for (keyword in keywords) {
-        if (keyword.isNotEmpty()) {
-            val keywordChars = keyword.toCharArray().toSet()
-            val codeChars = code.toCharArray().toSet()
-
-            val intersection = keywordChars.intersect(codeChars).size
-            val union = keywordChars.union(codeChars).size
-
-            val matchPercentage = if (union == 0) 0.0 else (intersection.toDouble() / union) * 100
-
-            // Update the highest match percentage if the current one is higher
-            if (matchPercentage > highestMatchPercentage) {
-                highestMatchPercentage = matchPercentage
-            }
-        }
-    }
-
-    return highestMatchPercentage
-}
-
-
-
-
-@Composable
-fun ImageTextList(bitmaps: List<Bitmap>, viewModel: MainViewModel) {
-    var extractedText by remember { mutableStateOf("") }
-    if (state == 1 || state == 2) {
-        LaunchedEffect(bitmaps.lastOrNull()) {
-            val lastBitmap = bitmaps.lastOrNull()
-            if (lastBitmap != null) {
-                viewModel.extractTextFromImage(lastBitmap) { text ->
-                    extractedText = modifyText(text)
-                }
-            }
-        }
-    }
-}
-
-
-
+@RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!hasRequiredPermissions()) {
@@ -150,31 +53,26 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-
     @RequiresApi(Build.VERSION_CODES.O)
     @Composable
-    fun TextExtraction() {
+    fun TextExtraction(viewModel: MainViewModel = viewModel()) {
         val scope = rememberCoroutineScope()
+        val context = LocalContext.current
         val controller = remember {
-            LifecycleCameraController(applicationContext).apply {
+            LifecycleCameraController(context).apply {
                 setEnabledUseCases(LifecycleCameraController.IMAGE_CAPTURE)
             }
         }
-        val viewModel = viewModel<MainViewModel>()
         val bitmaps by viewModel.bitmaps.collectAsState()
+        val vendor by viewModel.vendor.collectAsState()
+        val inhouse by viewModel.inhouse.collectAsState()
 
-        // Calculate match percentage
         var matchPercentage by remember { mutableStateOf<Int?>(null) }
         var backgroundColor by remember { mutableStateOf(Color.LightGray) }
 
-        if (state == 4) {
-            inhouse = ""
-            vendor = ""
-            matchPercentage = null
-            backgroundColor = Color.LightGray
-        }
 
-        if (state == 3) {
+
+        if (vendor.isNotEmpty() && inhouse.isNotEmpty()) {
             matchPercentage = calculateMatchPercentage(inhouse, vendor)
             backgroundColor = when {
                 matchPercentage == 100 -> Color.Green
@@ -182,41 +80,40 @@ class MainActivity : ComponentActivity() {
                 else -> Color.Red
             }
         }
-
+        else {
+            matchPercentage = null
+            backgroundColor = Color.LightGray
+        }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 32.dp), // Increased vertical padding for better spacing
-            verticalArrangement = Arrangement.SpaceAround, // Adjust vertical arrangement for better distribution
+                .padding(horizontal = 16.dp, vertical = 32.dp),
+            verticalArrangement = Arrangement.SpaceAround,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Title for OCR
             Text(
                 text = "OCR",
                 style = TextStyle(fontSize = 24.sp),
-                modifier = Modifier.padding(bottom = 40.dp) // Increased bottom padding for separation
+                modifier = Modifier.padding(bottom = 40.dp)
             )
 
-            // Box to display camera feed
             Box(
                 modifier = Modifier
-                    .size(300.dp) // Adjust size as needed
-                    .background(Color.Gray) // Placeholder background color
+                    .size(300.dp)
+                    .background(Color.Gray)
             ) {
-                CameraPreview(controller = controller, modifier = Modifier.fillMaxSize())
+                CameraPreview(controller = controller, modifier = Modifier.fillMaxSize(), lifecycleOwner = this@MainActivity)
             }
 
-            // Spacer to add more space between camera feed and match results
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Match Results Box
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp) // Adjust height as needed
-                    .background(backgroundColor) // Set background color based on match percentage
-                    .border(if (state == 2) 2.dp else 0.dp, if (state == 2) Color.Blue else Color.Transparent)
+                    .height(60.dp)
+                    .background(backgroundColor)
+                    .border(if (vendor.isNotEmpty() && inhouse.isNotEmpty()) 2.dp else 0.dp, if (vendor.isNotEmpty() && inhouse.isNotEmpty()) Color.Blue else Color.Transparent)
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -230,66 +127,53 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // Spacer to add more space between match results and extracted text boxes
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Row to show extracted text
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Box for extracted text 1 (Vendor)
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp) // Adjust height as needed
-                        .background(Color.LightGray) // Placeholder background color
-                        .border(if (state == 4) 2.dp else 0.dp, if (state == 4) Color.Blue else Color.Transparent)
+                        .height(50.dp)
+                        .background(Color.LightGray)
+                        .border(if (vendor == "") 2.dp else 0.dp, if (vendor == "") Color.Blue else Color.Transparent)
                 ) {
                     Column {
                         Text(text = "Vendor")
-
-                        ImageTextList(bitmaps, viewModel)
-
-                        Text(text =vendor)
+                        Text(text = vendor)
                     }
                 }
 
-                // Spacer to add some space between text boxes
                 Spacer(modifier = Modifier.width(16.dp))
 
-                // Box for extracted text 2 (Inhouse)
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(50.dp) // Adjust height as needed
-                        .background(Color.LightGray) // Placeholder background color]
-                        .border(if (state == 1) 2.dp else 0.dp, if (state == 1) Color.Blue else Color.Transparent)
+                        .height(50.dp)
+                        .background(Color.LightGray)
+                        .border(if (vendor.isNotEmpty() && inhouse == "") 2.dp else 0.dp, if (vendor.isNotEmpty() && inhouse == "") Color.Blue else Color.Transparent)
                 ) {
-                    Column{
+                    Column {
                         Text(text = "Inhouse")
-
-                        ImageTextList(bitmaps, viewModel)
-
-                        Text(text =inhouse)
+                        Text(text = inhouse)
                     }
                 }
             }
 
-            // Spacer to add some space between text boxes and button
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Button to capture image from camera
             Button(
                 onClick = {
-                    takePhoto(controller = controller, onPhotoTaken = { bitmap ->
-                        viewModel.onTakePhoto(bitmap)
-                    })
-                    if (state == 4) {
-                        state = 1
+                    if (vendor.isNotEmpty() && inhouse.isNotEmpty()) {
+                        viewModel.resetVendorAndInhouse()
                     }
                     else {
-                        state += 1
+                        takePhoto(controller) { bitmap ->
+                            viewModel.onTakePhoto(bitmap)
+                            viewModel.extractTextFromImage(bitmap)
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -297,13 +181,11 @@ class MainActivity : ComponentActivity() {
                 Text(text = "Capture Image")
             }
         }
-
     }
-
 
     private fun takePhoto(controller: LifecycleCameraController, onPhotoTaken: (Bitmap) -> Unit) {
         controller.takePicture(
-            ContextCompat.getMainExecutor(applicationContext),
+            ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
                     super.onCaptureSuccess(image)
@@ -322,7 +204,6 @@ class MainActivity : ComponentActivity() {
                     )
 
                     onPhotoTaken(rotatedBitmap)
-
                     image.close()
                 }
 

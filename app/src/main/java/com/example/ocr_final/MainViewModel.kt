@@ -1,13 +1,8 @@
 package com.example.ocr_final
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Color
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
@@ -15,15 +10,26 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
 
-class MainViewModel: ViewModel() {
+class MainViewModel : ViewModel() {
 
     private val _bitmaps = MutableStateFlow<List<Bitmap>>(emptyList())
     val bitmaps = _bitmaps.asStateFlow()
 
+    private val _vendor = MutableStateFlow("")
+    val vendor = _vendor.asStateFlow()
+
+    private val _inhouse = MutableStateFlow("")
+    val inhouse = _inhouse.asStateFlow()
+
+    var state = 1
+
+    fun resetVendorAndInhouse() {
+        viewModelScope.launch {
+            _vendor.value = ""
+            _inhouse.value = ""
+        }
+    }
 
     fun onTakePhoto(bitmap: Bitmap) {
         viewModelScope.launch {
@@ -31,7 +37,7 @@ class MainViewModel: ViewModel() {
         }
     }
 
-    fun extractTextFromImage(bitmap: Bitmap, onTextExtracted: (String) -> Unit) {
+    fun extractTextFromImage(bitmap: Bitmap) {
         val image = InputImage.fromBitmap(bitmap, 0)
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
 
@@ -40,11 +46,67 @@ class MainViewModel: ViewModel() {
                 val extractedText = visionText.text
                 Log.d("text", "Extracted text: $extractedText")
 
-                onTextExtracted(extractedText)
+                modifyText(extractedText)
             }
             .addOnFailureListener { e ->
                 Log.d("text", "Text recognition failed: $e")
-                onTextExtracted("") // Return an empty string on failure
             }
+    }
+
+    private fun modifyText(originalText: String) {
+        val lines = originalText.lines()
+        val codeRegex = "(?:.*?:\\s*|\\s+)(?=.*\\d)([\\w\\d]{10,})\\b".toRegex()
+        var highestMatchPercentage = 0.0
+        var bestMatch = ""
+
+        val keywords = when (state) {
+            1 -> listOf("batch", "lot", "p.o.")
+            2 -> listOf("vend")
+            else -> listOf("")
+        }
+
+        for (line in lines) {
+            val matches = codeRegex.findAll(line.trim())
+            for (match in matches) {
+                val code = match.groupValues[1]
+                val matchPercentage = calculateHighestMatchPercentage(line, keywords)
+                if (matchPercentage > highestMatchPercentage) {
+                    highestMatchPercentage = matchPercentage
+                    bestMatch = code
+                }
+            }
+        }
+
+        if (state == 1) {
+            _vendor.value = bestMatch
+            state = 2
+        } else if (state == 2) {
+            _inhouse.value = bestMatch
+            state = 1
+        }
+    }
+
+    private fun calculateHighestMatchPercentage(code: String, keywords: List<String>): Double {
+        if (keywords.isEmpty()) return 0.0
+
+        var highestMatchPercentage = 0.0
+
+        for (keyword in keywords) {
+            if (keyword.isNotEmpty()) {
+                val keywordChars = keyword.toCharArray().toSet()
+                val codeChars = code.toCharArray().toSet()
+
+                val intersection = keywordChars.intersect(codeChars).size
+                val union = keywordChars.union(codeChars).size
+
+                val matchPercentage = if (union == 0) 0.0 else (intersection.toDouble() / union) * 100
+
+                if (matchPercentage > highestMatchPercentage) {
+                    highestMatchPercentage = matchPercentage
+                }
+            }
+        }
+
+        return highestMatchPercentage
     }
 }
