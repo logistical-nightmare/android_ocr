@@ -51,7 +51,7 @@ fun calculateMatchPercentage(str1: String, str2: String): Int {
 
 fun modifyText(originalText: String): String {
     val lines = originalText.lines()
-    val codeRegex = "\\b(?=.*\\d)[:\\w\\d]{10,}\\b".toRegex()
+    val codeRegex = "(?:.*?:\\s*|\\s+)(?=.*\\d)([\\w\\d]{10,})\\b".toRegex()
     var highestMatchPercentage = 0.0
     var bestMatch = ""
 
@@ -67,17 +67,16 @@ fun modifyText(originalText: String): String {
         val matches = codeRegex.findAll(line)
         Log.d("matches", matches.toString())
         for (match in matches) {
-            val code = match.value
+            val code = match.groupValues[1] // Capture the part after the colon
             val matchPercentage2 = calculateMatchPercentage2(line, keyword)
             Log.d("percentage", "$line $keyword $matchPercentage2")
 
             if (matchPercentage2 >= highestMatchPercentage) {
                 highestMatchPercentage = matchPercentage2
                 bestMatch = code
-                if(state == 1){
+                if (state == 1) {
                     vendor = bestMatch
-                }
-                else if (state == 2) {
+                } else if (state == 2) {
                     inhouse = bestMatch
                 }
             }
@@ -87,6 +86,7 @@ fun modifyText(originalText: String): String {
     Log.d("BestMatch", bestMatch)
     return bestMatch
 }
+
 
 fun calculateMatchPercentage2(code: String, keyword: String): Double {
     if (keyword.isEmpty()) return 0.0
