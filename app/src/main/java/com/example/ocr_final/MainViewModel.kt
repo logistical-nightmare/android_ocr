@@ -55,9 +55,11 @@ class MainViewModel : ViewModel() {
 
     private fun modifyText(originalText: String) {
         val lines = originalText.lines()
-        val codeRegex = "(?:.*?:\\s*|\\s+)(?=.*\\d)([\\w\\d]{10,})\\b".toRegex()
+        // Keep the original regex but adjust it to account for lines that contain only the code.
+        val codeRegex = "(?:.*?:\\s*|\\s+)?(?=.*\\d)([\\w\\d]{10,})\\b".toRegex()
         var highestMatchPercentage = 0.0
         var bestMatch = ""
+        tryAgain = false
 
         val keywords = when (state) {
             1 -> listOf("batch", "lot", "p.o.")
@@ -70,7 +72,7 @@ class MainViewModel : ViewModel() {
             for (match in matches) {
                 val code = match.groupValues[1]
                 val matchPercentage = calculateHighestMatchPercentage(line, keywords)
-                if (matchPercentage > highestMatchPercentage) {
+                if (matchPercentage >= highestMatchPercentage) {
                     highestMatchPercentage = matchPercentage
                     bestMatch = code
                 }
@@ -79,10 +81,21 @@ class MainViewModel : ViewModel() {
 
         if (state == 1) {
             _vendor.value = bestMatch
-            state = 2
+            if (bestMatch.isNotEmpty()) {
+                state = 2
+            }
+            else
+            {
+                tryAgain = true
+            }
         } else if (state == 2) {
             _inhouse.value = bestMatch
-            state = 1
+            if(bestMatch.isNotEmpty()) {
+                state = 1
+            }
+            else {
+                tryAgain = true
+            }
         }
     }
 
@@ -99,7 +112,8 @@ class MainViewModel : ViewModel() {
                 val intersection = keywordChars.intersect(codeChars).size
                 val union = keywordChars.union(codeChars).size
 
-                val matchPercentage = if (union == 0) 0.0 else (intersection.toDouble() / union) * 100
+                val matchPercentage =
+                    if (union == 0) 0.0 else (intersection.toDouble() / union) * 100
 
                 if (matchPercentage > highestMatchPercentage) {
                     highestMatchPercentage = matchPercentage

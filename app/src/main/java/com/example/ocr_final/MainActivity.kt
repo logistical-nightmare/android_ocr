@@ -32,6 +32,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ocr_final.ui.theme.Ocr_finalTheme
 import kotlinx.coroutines.launch
 
+var tryAgain = false
 fun calculateMatchPercentage(str1: String, str2: String): Int {
     val maxLength = maxOf(str1.length, str2.length)
     val matchLength = str1.zip(str2).count { it.first == it.second }
@@ -161,8 +162,13 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(12.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
+            if (tryAgain) {
+                Text(text = "Try Again")
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Button(
                 onClick = {
