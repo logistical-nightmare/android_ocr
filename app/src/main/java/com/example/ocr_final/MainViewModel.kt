@@ -38,7 +38,15 @@ class MainViewModel : ViewModel() {
 
     fun undoState() {
         viewModelScope.launch(){
-            _state.value -= 1
+
+            if (_state.value == 2) {
+                _vendor.value = ""
+                _state.value -= 1
+            }
+            else if (_state.value== 3) {
+                _inhouse.value = ""
+                _state.value -= 1
+            }
         }
     }
 
