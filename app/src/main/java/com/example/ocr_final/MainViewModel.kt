@@ -28,11 +28,20 @@ class MainViewModel : ViewModel() {
     private val _state = MutableStateFlow(1)
     val state = _state.asStateFlow()
 
+    private val _noScanned = MutableStateFlow(0)
+    val noScanned = _noScanned.asStateFlow()
+
     fun resetVendorAndInhouse() {
         viewModelScope.launch {
             _vendor.value = ""
             _inhouse.value = ""
             _state.value = 1
+        }
+    }
+
+    fun addNoScanned() {
+        viewModelScope.launch(){
+            _noScanned.value += 1
         }
     }
 

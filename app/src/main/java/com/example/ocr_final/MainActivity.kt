@@ -80,6 +80,7 @@ class MainActivity : ComponentActivity() {
         val tryAgain by viewModel.tryAgain.collectAsState()
         var isFlashlightOn by remember { mutableStateOf(false) }
         val state by viewModel.state.collectAsState()
+        val noScanned by viewModel.noScanned.collectAsState()
 
 
         var matchPercentage by remember { mutableStateOf<Int?>(null) }
@@ -87,7 +88,7 @@ class MainActivity : ComponentActivity() {
 
 
 
-        if (vendor.isNotEmpty() && inhouse.isNotEmpty()) {
+        if (state == 3) {
             matchPercentage = calculateMatchPercentage(inhouse, vendor)
             backgroundColor = when {
                 matchPercentage == 100 -> Color.Green
@@ -146,7 +147,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -204,13 +205,29 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier
                         .width(200.dp)
                         .height(80.dp)
-                        .padding(16.dp)
+                        .padding(4.dp)
                         .background(color = Color.Red, shape = RoundedCornerShape(8.dp))
                         .padding(8.dp)
                 ) {
                     Text(
                         text = "Try Again",
                         color = Color.White,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
+            else {
+                Box(
+                    modifier = Modifier
+                        .width(200.dp)
+                        .height(60.dp)
+                        .padding(4.dp)
+                        .background(color = Color(0xFFADD8E6), shape = RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "Scanned: $noScanned",
+                        color = Color.Black,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -236,6 +253,9 @@ class MainActivity : ComponentActivity() {
                     onClick = {
                         if (state == 3) {
                             viewModel.resetVendorAndInhouse()
+                            if (matchPercentage!! >= 80) {
+                                viewModel.addNoScanned()
+                            }
                         } else {
                             takePhoto(controller) { bitmap ->
                                 viewModel.onTakePhoto(bitmap)
