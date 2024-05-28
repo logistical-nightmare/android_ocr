@@ -22,7 +22,10 @@ class MainViewModel : ViewModel() {
     private val _inhouse = MutableStateFlow("")
     val inhouse = _inhouse.asStateFlow()
 
-    var state = 1
+    private val _tryAgain = MutableStateFlow(false)
+    val tryAgain = _tryAgain.asStateFlow()
+
+    private var state = 1
 
     fun resetVendorAndInhouse() {
         viewModelScope.launch {
@@ -53,13 +56,14 @@ class MainViewModel : ViewModel() {
             }
     }
 
-    private fun modifyText(originalText: String) {
+
+
+    fun modifyText(originalText: String) {
         val lines = originalText.lines()
         // Keep the original regex but adjust it to account for lines that contain only the code.
         val codeRegex = "(?:.*?:\\s*|\\s+)?(?=.*\\d)([\\w\\d]{10,})\\b".toRegex()
         var highestMatchPercentage = 0.0
         var bestMatch = ""
-        tryAgain = false
 
         val keywords = when (state) {
             1 -> listOf("batch", "lot", "p.o.")
@@ -83,22 +87,20 @@ class MainViewModel : ViewModel() {
             _vendor.value = bestMatch
             if (bestMatch.isNotEmpty()) {
                 state = 2
-            }
-            else
-            {
-                tryAgain = true
+                _tryAgain.value = false
+            } else {
+                _tryAgain.value = true
             }
         } else if (state == 2) {
             _inhouse.value = bestMatch
-            if(bestMatch.isNotEmpty()) {
+            if (bestMatch.isNotEmpty()) {
                 state = 1
-            }
-            else {
-                tryAgain = true
+                _tryAgain.value = false
+            } else {
+                _tryAgain.value = true
             }
         }
     }
-
     private fun calculateHighestMatchPercentage(code: String, keywords: List<String>): Double {
         if (keywords.isEmpty()) return 0.0
 

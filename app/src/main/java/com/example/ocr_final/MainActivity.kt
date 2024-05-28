@@ -32,7 +32,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ocr_final.ui.theme.Ocr_finalTheme
 import kotlinx.coroutines.launch
 
-var tryAgain = false
 fun calculateMatchPercentage(str1: String, str2: String): Int {
     val maxLength = maxOf(str1.length, str2.length)
     val matchLength = str1.zip(str2).count { it.first == it.second }
@@ -67,6 +66,7 @@ class MainActivity : ComponentActivity() {
         val bitmaps by viewModel.bitmaps.collectAsState()
         val vendor by viewModel.vendor.collectAsState()
         val inhouse by viewModel.inhouse.collectAsState()
+        val tryAgain by viewModel.tryAgain.collectAsState()
 
         var matchPercentage by remember { mutableStateOf<Int?>(null) }
         var backgroundColor by remember { mutableStateOf(Color.LightGray) }
@@ -114,7 +114,10 @@ class MainActivity : ComponentActivity() {
                     .fillMaxWidth()
                     .height(60.dp)
                     .background(backgroundColor)
-                    .border(if (vendor.isNotEmpty() && inhouse.isNotEmpty()) 2.dp else 0.dp, if (vendor.isNotEmpty() && inhouse.isNotEmpty()) Color.Blue else Color.Transparent)
+                    .border(
+                        if (vendor.isNotEmpty() && inhouse.isNotEmpty()) 2.dp else 0.dp,
+                        if (vendor.isNotEmpty() && inhouse.isNotEmpty()) Color.Blue else Color.Transparent
+                    )
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -139,7 +142,10 @@ class MainActivity : ComponentActivity() {
                         .weight(1f)
                         .height(50.dp)
                         .background(Color.LightGray)
-                        .border(if (vendor == "") 2.dp else 0.dp, if (vendor == "") Color.Blue else Color.Transparent)
+                        .border(
+                            if (vendor == "") 2.dp else 0.dp,
+                            if (vendor == "") Color.Blue else Color.Transparent
+                        )
                 ) {
                     Column {
                         Text(text = "Vendor")
@@ -154,7 +160,10 @@ class MainActivity : ComponentActivity() {
                         .weight(1f)
                         .height(50.dp)
                         .background(Color.LightGray)
-                        .border(if (vendor.isNotEmpty() && inhouse == "") 2.dp else 0.dp, if (vendor.isNotEmpty() && inhouse == "") Color.Blue else Color.Transparent)
+                        .border(
+                            if (vendor.isNotEmpty() && inhouse == "") 2.dp else 0.dp,
+                            if (vendor.isNotEmpty() && inhouse == "") Color.Blue else Color.Transparent
+                        )
                 ) {
                     Column {
                         Text(text = "Inhouse")
