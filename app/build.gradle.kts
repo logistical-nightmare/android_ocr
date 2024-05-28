@@ -85,4 +85,6 @@ dependencies {
     implementation ("com.google.mlkit:image-labeling:17.0.8")
     //Tensorflow lite - To recognize Latin script
     implementation ("com.google.mlkit:text-recognition:16.0.0")
+
+
 }

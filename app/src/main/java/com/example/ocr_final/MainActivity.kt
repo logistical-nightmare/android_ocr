@@ -17,12 +17,20 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CameraAlt
+import androidx.compose.material.icons.rounded.FlashlightOff
+import androidx.compose.material.icons.rounded.FlashlightOn
+import androidx.compose.material.icons.rounded.Undo
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +39,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ocr_final.ui.theme.Ocr_finalTheme
 import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.material3.IconButton
 
 fun calculateMatchPercentage(str1: String, str2: String): Int {
     val maxLength = maxOf(str1.length, str2.length)
@@ -68,6 +78,7 @@ class MainActivity : ComponentActivity() {
         val inhouse by viewModel.inhouse.collectAsState()
         val tryAgain by viewModel.tryAgain.collectAsState()
         var isFlashlightOn by remember { mutableStateOf(false) }
+
 
         var matchPercentage by remember { mutableStateOf<Int?>(null) }
         var backgroundColor by remember { mutableStateOf(Color.LightGray) }
@@ -108,19 +119,7 @@ class MainActivity : ComponentActivity() {
                 CameraPreview(controller = controller, modifier = Modifier.fillMaxSize(), lifecycleOwner = this@MainActivity)
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-
-            Button(
-                onClick = {
-                    isFlashlightOn = !isFlashlightOn
-                    controller.enableTorch(isFlashlightOn)
-                          },
-                modifier = Modifier
-                    .padding(16.dp)
-            ) {
-                Text(text = if (isFlashlightOn) "Turn Off Flashlight" else "Turn On Flashlight")
-            }
+            Spacer(modifier = Modifier.height(30.dp))
 
 
             Box(
@@ -193,21 +192,52 @@ class MainActivity : ComponentActivity() {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Button(
-                onClick = {
-                    if (vendor.isNotEmpty() && inhouse.isNotEmpty()) {
-                        viewModel.resetVendorAndInhouse()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ){
+                Button(
+                    onClick = {
+
+                    },
+                    modifier = Modifier.width(80.dp)
+                ) {
+                    Icon(Icons.Rounded.Undo , contentDescription = "Undo")
+                }
+
+                Button(
+                    onClick = {
+                        if (vendor.isNotEmpty() && inhouse.isNotEmpty()) {
+                            viewModel.resetVendorAndInhouse()
+                        } else {
+                            takePhoto(controller) { bitmap ->
+                                viewModel.onTakePhoto(bitmap)
+                                viewModel.extractTextFromImage(bitmap)
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .width(100.dp)
+                        .height(100.dp)
+                ) {
+                    Icon(Icons.Rounded.CameraAlt, contentDescription = "Camera")
+                }
+
+                Button(
+                    onClick = {
+                        isFlashlightOn = !isFlashlightOn
+                        controller.enableTorch(isFlashlightOn)
+                    },
+                    modifier = Modifier.width(80.dp)
+                ) {
+                    if (isFlashlightOn) {
+                        Icon(Icons.Rounded.FlashlightOn, contentDescription = "FlashLightOn")
                     }
                     else {
-                        takePhoto(controller) { bitmap ->
-                            viewModel.onTakePhoto(bitmap)
-                            viewModel.extractTextFromImage(bitmap)
-                        }
+                        Icon(Icons.Rounded.FlashlightOff, contentDescription = "FlashLightOff")
                     }
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Capture Image")
+                }
             }
         }
     }
