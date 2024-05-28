@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "OCR",
+                text = "Blab OCR",
                 style = TextStyle(fontSize = 24.sp),
                 modifier = Modifier.padding(bottom = 40.dp)
             )
@@ -160,9 +160,14 @@ class MainActivity : ComponentActivity() {
                         .border(
                             if (state == 1) 2.dp else 0.dp,
                             if (state == 1) Color.Blue else Color.Transparent
-                        )
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column {
+                    Column (
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(1.dp)
+                    ){
                         Text(text = "Vendor")
                         Text(text = vendor)
                     }
@@ -178,9 +183,15 @@ class MainActivity : ComponentActivity() {
                         .border(
                             if (state == 2) 2.dp else 0.dp,
                             if (state == 2) Color.Blue else Color.Transparent
-                        )
+                        ),
+                    contentAlignment = Alignment.Center
+
                 ) {
-                    Column {
+                    Column (
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(1.dp)
+                    ){
                         Text(text = "Inhouse")
                         Text(text = inhouse)
                     }

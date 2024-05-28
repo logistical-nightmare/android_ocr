@@ -77,7 +77,7 @@ class MainViewModel : ViewModel() {
     fun modifyText(originalText: String) {
         val lines = originalText.lines()
         // Keep the original regex but adjust it to account for lines that contain only the code.
-        val codeRegex = "(?:.*?:\\s*|\\s+)?(?=.*\\d)([\\w\\d]{10,})\\b".toRegex()
+        val codeRegex = "(?:.*?:\\s*|\\s+)?(?=.*\\d)([\\w\\d-]{8,})\\b".toRegex()
         var highestMatchPercentage = 0.0
         var bestMatch = ""
 
