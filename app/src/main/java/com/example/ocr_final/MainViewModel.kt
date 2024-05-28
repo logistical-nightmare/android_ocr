@@ -25,12 +25,20 @@ class MainViewModel : ViewModel() {
     private val _tryAgain = MutableStateFlow(false)
     val tryAgain = _tryAgain.asStateFlow()
 
-    private var state = 1
+    private val _state = MutableStateFlow(1)
+    val state = _state.asStateFlow()
 
     fun resetVendorAndInhouse() {
         viewModelScope.launch {
             _vendor.value = ""
             _inhouse.value = ""
+            _state.value = 1
+        }
+    }
+
+    fun undoState() {
+        viewModelScope.launch(){
+            _state.value -= 1
         }
     }
 
@@ -65,7 +73,7 @@ class MainViewModel : ViewModel() {
         var highestMatchPercentage = 0.0
         var bestMatch = ""
 
-        val keywords = when (state) {
+        val keywords = when (_state.value) {
             1 -> listOf("batch", "lot", "p.o.")
             2 -> listOf("vend")
             else -> listOf("")
@@ -83,18 +91,18 @@ class MainViewModel : ViewModel() {
             }
         }
 
-        if (state == 1) {
+        if (_state.value == 1) {
             _vendor.value = bestMatch
             if (bestMatch.isNotEmpty()) {
-                state = 2
+                _state.value = 2
                 _tryAgain.value = false
             } else {
                 _tryAgain.value = true
             }
-        } else if (state == 2) {
+        } else if (_state.value == 2) {
             _inhouse.value = bestMatch
             if (bestMatch.isNotEmpty()) {
-                state = 1
+                _state.value = 3
                 _tryAgain.value = false
             } else {
                 _tryAgain.value = true

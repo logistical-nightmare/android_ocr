@@ -17,6 +17,7 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.FlashlightOff
@@ -78,6 +79,7 @@ class MainActivity : ComponentActivity() {
         val inhouse by viewModel.inhouse.collectAsState()
         val tryAgain by viewModel.tryAgain.collectAsState()
         var isFlashlightOn by remember { mutableStateOf(false) }
+        val state by viewModel.state.collectAsState()
 
 
         var matchPercentage by remember { mutableStateOf<Int?>(null) }
@@ -119,7 +121,7 @@ class MainActivity : ComponentActivity() {
                 CameraPreview(controller = controller, modifier = Modifier.fillMaxSize(), lifecycleOwner = this@MainActivity)
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(50.dp))
 
 
             Box(
@@ -128,8 +130,8 @@ class MainActivity : ComponentActivity() {
                     .height(60.dp)
                     .background(backgroundColor)
                     .border(
-                        if (vendor.isNotEmpty() && inhouse.isNotEmpty()) 2.dp else 0.dp,
-                        if (vendor.isNotEmpty() && inhouse.isNotEmpty()) Color.Blue else Color.Transparent
+                        if (state == 3) 2.dp else 0.dp,
+                        if (state == 3) Color.Blue else Color.Transparent
                     )
             ) {
                 Column(
@@ -156,8 +158,8 @@ class MainActivity : ComponentActivity() {
                         .height(50.dp)
                         .background(Color.LightGray)
                         .border(
-                            if (vendor == "") 2.dp else 0.dp,
-                            if (vendor == "") Color.Blue else Color.Transparent
+                            if (state == 1) 2.dp else 0.dp,
+                            if (state == 1) Color.Blue else Color.Transparent
                         )
                 ) {
                     Column {
@@ -174,8 +176,8 @@ class MainActivity : ComponentActivity() {
                         .height(50.dp)
                         .background(Color.LightGray)
                         .border(
-                            if (vendor.isNotEmpty() && inhouse == "") 2.dp else 0.dp,
-                            if (vendor.isNotEmpty() && inhouse == "") Color.Blue else Color.Transparent
+                            if (state == 2) 2.dp else 0.dp,
+                            if (state == 2) Color.Blue else Color.Transparent
                         )
                 ) {
                     Column {
@@ -187,7 +189,20 @@ class MainActivity : ComponentActivity() {
             Spacer(modifier = Modifier.height(12.dp))
 
             if (tryAgain) {
-                Text(text = "Try Again")
+                Box(
+                    modifier = Modifier
+                        .width(200.dp)
+                        .height(80.dp)
+                        .padding(16.dp)
+                        .background(color = Color.Red, shape = RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "Try Again",
+                        color = Color.White,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -199,7 +214,7 @@ class MainActivity : ComponentActivity() {
             ){
                 Button(
                     onClick = {
-
+                        viewModel.undoState()
                     },
                     modifier = Modifier.width(80.dp)
                 ) {
@@ -208,7 +223,7 @@ class MainActivity : ComponentActivity() {
 
                 Button(
                     onClick = {
-                        if (vendor.isNotEmpty() && inhouse.isNotEmpty()) {
+                        if (state == 3) {
                             viewModel.resetVendorAndInhouse()
                         } else {
                             takePhoto(controller) { bitmap ->
