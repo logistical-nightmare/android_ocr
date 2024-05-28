@@ -60,13 +60,14 @@ class MainActivity : ComponentActivity() {
         val context = LocalContext.current
         val controller = remember {
             LifecycleCameraController(context).apply {
-                setEnabledUseCases(LifecycleCameraController.IMAGE_CAPTURE)
+                setEnabledUseCases(LifecycleCameraController.IMAGE_CAPTURE or LifecycleCameraController.IMAGE_ANALYSIS)
             }
         }
         val bitmaps by viewModel.bitmaps.collectAsState()
         val vendor by viewModel.vendor.collectAsState()
         val inhouse by viewModel.inhouse.collectAsState()
         val tryAgain by viewModel.tryAgain.collectAsState()
+        var isFlashlightOn by remember { mutableStateOf(false) }
 
         var matchPercentage by remember { mutableStateOf<Int?>(null) }
         var backgroundColor by remember { mutableStateOf(Color.LightGray) }
@@ -107,7 +108,20 @@ class MainActivity : ComponentActivity() {
                 CameraPreview(controller = controller, modifier = Modifier.fillMaxSize(), lifecycleOwner = this@MainActivity)
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+
+
+            Button(
+                onClick = {
+                    isFlashlightOn = !isFlashlightOn
+                    controller.enableTorch(isFlashlightOn)
+                          },
+                modifier = Modifier
+                    .padding(16.dp)
+            ) {
+                Text(text = if (isFlashlightOn) "Turn Off Flashlight" else "Turn On Flashlight")
+            }
+
 
             Box(
                 modifier = Modifier
