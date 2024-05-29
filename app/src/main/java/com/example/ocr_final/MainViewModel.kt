@@ -14,6 +14,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.io.File
+import android.content.Context
+import android.content.Intent
+import androidx.core.content.FileProvider
+
 
 
 
@@ -75,6 +80,49 @@ class MainViewModel : ViewModel() {
         println("Printing MatchData list:")
         currentList.forEachIndexed { index, matchData ->
             println("Item ${index + 1}: Time=${matchData.time}, Vendor=${matchData.vendor}, Inhouse=${matchData.inhouse}")
+        }
+    }
+
+    fun shareMatchDataList(context: Context) {
+        val currentList = _matchDataList.value
+
+        if (currentList.isEmpty()) {
+            println("MatchData list is empty. Nothing to share.")
+            return
+        }
+
+        val csvData = StringBuilder()
+        // Write CSV header
+        csvData.append("Time,Vendor,Inhouse\n")
+
+        // Write each MatchData item as a new line in the CSV
+        currentList.forEach { matchData ->
+            csvData.append("${matchData.time},${matchData.vendor},${matchData.inhouse}\n")
+        }
+
+        try {
+            // Save CSV data to a temporary file
+            val file = File(context.cacheDir, "match_data.csv")
+            file.writeText(csvData.toString())
+
+            // Get URI for the file
+            val fileUri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.provider", // Your provider authority
+                file
+            )
+
+            // Create share intent
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/csv"
+                putExtra(Intent.EXTRA_STREAM, fileUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            // Launch the share menu
+            context.startActivity(Intent.createChooser(shareIntent, "Share Match Data"))
+        } catch (ex: Exception) {
+            println("Error sharing MatchData list: ${ex.message}")
         }
     }
 

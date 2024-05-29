@@ -248,6 +248,7 @@ class MainActivity : ComponentActivity() {
                     ClickableBox(
                         onClick = {
                             viewModel.printMatchDataList()
+                            viewModel.shareMatchDataList(context)
                         },
                         contentDescription = "Share"
                     )
