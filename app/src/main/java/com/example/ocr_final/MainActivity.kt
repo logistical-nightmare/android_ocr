@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
         val noScanned by viewModel.noScanned.collectAsState()
 
 
-        var matchPercentage by remember { mutableStateOf<Int?>(null) }
+        var matchPercentage by remember { mutableStateOf<Int>(0) }
         var backgroundColor by remember { mutableStateOf(Color.LightGray) }
 
 
@@ -97,7 +97,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         else {
-            matchPercentage = null
+            matchPercentage = 0
             backgroundColor = Color.LightGray
         }
 
@@ -109,7 +109,7 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Blab OCR",
+                text = "BLab OCR",
                 style = TextStyle(fontSize = 24.sp),
                 modifier = Modifier.padding(bottom = 40.dp)
             )
@@ -131,7 +131,7 @@ class MainActivity : ComponentActivity() {
                     .height(60.dp)
                     .background(backgroundColor)
                     .border(
-                        if (state == 3) 2.dp else 0.dp,
+                        if (state == 3) 4.dp else 0.dp,
                         if (state == 3) Color.Blue else Color.Transparent
                     )
             ) {
@@ -140,10 +140,7 @@ class MainActivity : ComponentActivity() {
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = "Match Results")
-                    if (inhouse.isNotEmpty() && vendor.isNotEmpty()) {
-                        Text(text = "Match Percentage: $matchPercentage%")
-                    }
+                    Text(text = "Match Percentage: $matchPercentage%")
                 }
             }
 
@@ -159,8 +156,10 @@ class MainActivity : ComponentActivity() {
                         .height(50.dp)
                         .background(Color.LightGray)
                         .border(
-                            if (state == 1) 2.dp else 0.dp,
-                            if (state == 1) Color.Blue else Color.Transparent
+                            if (state == 1) 4.dp else 0.dp,
+                            if (state == 1 && tryAgain) Color.Red
+                            else if (state == 1) Color.Blue
+                            else Color.Transparent
                         ),
                     contentAlignment = Alignment.Center
                 ) {
@@ -170,6 +169,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(1.dp)
                     ){
                         Text(text = "Vendor")
+                        if(tryAgain && state == 1) Text(text = "Try Again")
                         Text(text = vendor)
                     }
                 }
@@ -182,8 +182,10 @@ class MainActivity : ComponentActivity() {
                         .height(50.dp)
                         .background(Color.LightGray)
                         .border(
-                            if (state == 2) 2.dp else 0.dp,
-                            if (state == 2) Color.Blue else Color.Transparent
+                            if (state == 2) 4.dp else 0.dp,
+                            if (state == 2 && tryAgain) Color.Red
+                            else if (state == 2) Color.Blue
+                            else Color.Transparent
                         ),
                     contentAlignment = Alignment.Center
 
@@ -194,29 +196,14 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(1.dp)
                     ){
                         Text(text = "Inhouse")
+                        if(tryAgain && state == 2) Text(text = "Try Again")
                         Text(text = inhouse)
                     }
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
 
-            if (tryAgain) {
-                Box(
-                    modifier = Modifier
-                        .width(200.dp)
-                        .height(80.dp)
-                        .padding(4.dp)
-                        .background(color = Color.Red, shape = RoundedCornerShape(8.dp))
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "Try Again",
-                        color = Color.White,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-            }
-            else {
+
                 Box(
                     modifier = Modifier
                         .width(200.dp)
@@ -231,7 +218,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
-            }
+
 
             Spacer(modifier = Modifier.height(12.dp))
 

@@ -51,10 +51,12 @@ class MainViewModel : ViewModel() {
             if (_state.value == 2) {
                 _vendor.value = ""
                 _state.value -= 1
+                _tryAgain.value = false
             }
             else if (_state.value== 3) {
                 _inhouse.value = ""
                 _state.value -= 1
+                _tryAgain.value = false
             }
         }
     }
