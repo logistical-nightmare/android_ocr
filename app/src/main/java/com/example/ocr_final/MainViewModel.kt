@@ -1,7 +1,9 @@
 package com.example.ocr_final
 
 import android.graphics.Bitmap
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.mlkit.vision.common.InputImage
@@ -10,7 +12,13 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
+
+
+
+data class MatchData (val time: String, val vendor: String, val inhouse: String)
 class MainViewModel : ViewModel() {
 
     private val _bitmaps = MutableStateFlow<List<Bitmap>>(emptyList())
@@ -30,6 +38,45 @@ class MainViewModel : ViewModel() {
 
     private val _noScanned = MutableStateFlow(0)
     val noScanned = _noScanned.asStateFlow()
+
+    private val _matchDataList = MutableStateFlow<List<MatchData>>(emptyList())
+    val matchDataList = _matchDataList.asStateFlow()
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun addToMatchDataList(vendor: String, inhouse: String) {
+        // Get the current date and time
+        val currentDateTime = LocalDateTime.now()
+
+        // Format the current date and time
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        val formattedDateTime = currentDateTime.format(formatter)
+
+        // Create a new MatchData object with the current date and time
+        val newMatchData = MatchData(formattedDateTime, vendor, inhouse)
+
+        // Add the new MatchData to the existing list
+        val currentList = _matchDataList.value.toMutableList()
+        currentList.add(newMatchData)
+
+        // Update the _matchDataList with the updated list
+        _matchDataList.value = currentList.toList()
+
+    }
+
+    fun printMatchDataList() {
+        val currentList = _matchDataList.value
+
+        if (currentList.isEmpty()) {
+            println("MatchData list is empty.")
+            return
+        }
+
+        println("Printing MatchData list:")
+        currentList.forEachIndexed { index, matchData ->
+            println("Item ${index + 1}: Time=${matchData.time}, Vendor=${matchData.vendor}, Inhouse=${matchData.inhouse}")
+        }
+    }
 
     fun resetVendorAndInhouse() {
         viewModelScope.launch {

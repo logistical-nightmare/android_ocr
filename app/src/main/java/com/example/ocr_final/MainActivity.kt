@@ -16,9 +16,11 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.IosShare
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.FlashlightOff
 import androidx.compose.material.icons.rounded.FlashlightOn
@@ -42,11 +44,35 @@ import com.example.ocr_final.ui.theme.Ocr_finalTheme
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.unit.Dp
 
 fun calculateMatchPercentage(str1: String, str2: String): Int {
     val maxLength = maxOf(str1.length, str2.length)
     val matchLength = str1.zip(str2).count { it.first == it.second }
     return (matchLength.toDouble() / maxLength * 100).toInt()
+}
+
+@Composable
+fun ClickableBox(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    backgroundColor: Color = Color(0xFFADD8E6),
+    shape: Shape = RoundedCornerShape(8.dp),
+    iconSize: Dp = 24.dp,
+    contentDescription: String? = null
+) {
+    Box(
+        modifier = modifier
+            .size(60.dp)
+            .padding(4.dp)
+            .background(color = backgroundColor, shape = shape)
+            .padding(8.dp)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(Icons.Default.IosShare, contentDescription = contentDescription, modifier = Modifier.size(iconSize))
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -203,21 +229,30 @@ class MainActivity : ComponentActivity() {
             }
             Spacer(modifier = Modifier.height(12.dp))
 
+                Row() {
+                    Box(
+                        modifier = Modifier
+                            .width(200.dp)
+                            .height(60.dp)
+                            .padding(4.dp)
+                            .background(color = Color(0xFFADD8E6), shape = RoundedCornerShape(8.dp))
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = "Scanned: $noScanned",
+                            color = Color.Black,
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    }
 
-                Box(
-                    modifier = Modifier
-                        .width(200.dp)
-                        .height(60.dp)
-                        .padding(4.dp)
-                        .background(color = Color(0xFFADD8E6), shape = RoundedCornerShape(8.dp))
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "Scanned: $noScanned",
-                        color = Color.Black,
-                        modifier = Modifier.align(Alignment.Center)
+                    ClickableBox(
+                        onClick = {
+                            viewModel.printMatchDataList()
+                        },
+                        contentDescription = "Share"
                     )
                 }
+
 
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -240,8 +275,9 @@ class MainActivity : ComponentActivity() {
                     onClick = {
                         if (state == 3) {
                             viewModel.resetVendorAndInhouse()
-                            if (matchPercentage!! >= 80) {
+                            if (matchPercentage >= 80) {
                                 viewModel.addNoScanned()
+                                viewModel.addToMatchDataList(vendor, inhouse)
                             }
                         } else {
                             takePhoto(controller) { bitmap ->
