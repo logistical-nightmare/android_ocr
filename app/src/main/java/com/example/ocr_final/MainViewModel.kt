@@ -197,7 +197,12 @@ class MainViewModel : ViewModel() {
             val matches = codeRegex.findAll(line.trim())
             for (match in matches) {
                 val code = match.groupValues[1]
+                if (!code.any { it.isDigit() }) {
+                    continue
+                }
+                Log.d("code", code)
                 val matchPercentage = calculateHighestMatchPercentage(line, keywords)
+                Log.d("matching", "$line $keywords $matchPercentage")
                 if (matchPercentage >= highestMatchPercentage) {
                     highestMatchPercentage = matchPercentage
                     bestMatch = code
