@@ -22,8 +22,18 @@ import androidx.core.content.FileProvider
 
 
 
-
+/**
+ * Data class representing match data with time, vendor, and inhouse information.
+ *
+ * @property time The time when the match data was created.
+ * @property vendor The vendor information.
+ * @property inhouse The inhouse information.
+ */
 data class MatchData (val time: String, val vendor: String, val inhouse: String)
+
+/**
+ * ViewModel for managing OCR and match data operations.
+ */
 class MainViewModel : ViewModel() {
 
     private val _bitmaps = MutableStateFlow<List<Bitmap>>(emptyList())
@@ -48,6 +58,12 @@ class MainViewModel : ViewModel() {
     val matchDataList = _matchDataList.asStateFlow()
 
 
+    /**
+     * Adds a new match data entry with the current date and time.
+     *
+     * @param vendor The vendor information.
+     * @param inhouse The inhouse information.
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     fun addToMatchDataList(vendor: String, inhouse: String) {
         // Get the current date and time
@@ -69,6 +85,9 @@ class MainViewModel : ViewModel() {
 
     }
 
+    /**
+     * Prints the match data list to the console.
+     */
     fun printMatchDataList() {
         val currentList = _matchDataList.value
 
@@ -83,6 +102,11 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Shares the match data list as a CSV file.
+     *
+     * @param context The context to use for sharing.
+     */
     fun shareMatchDataList(context: Context) {
         val currentList = _matchDataList.value
 
@@ -126,6 +150,9 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Resets the vendor and inhouse information and updates the state.
+     */
     fun resetVendorAndInhouse() {
         viewModelScope.launch {
             _vendor.value = ""
@@ -134,12 +161,18 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Increments the count of scanned items.
+     */
     fun addNoScanned() {
         viewModelScope.launch(){
             _noScanned.value += 1
         }
     }
 
+    /**
+     * Reverts the state to the previous one and clears the relevant data.
+     */
     fun undoState() {
         viewModelScope.launch(){
 
@@ -156,12 +189,22 @@ class MainViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Adds a new bitmap to the list of bitmaps.
+     *
+     * @param bitmap The bitmap to add.
+     */
     fun onTakePhoto(bitmap: Bitmap) {
         viewModelScope.launch {
             _bitmaps.value += bitmap
         }
     }
 
+    /**
+     * Extracts text from a given bitmap using ML Kit's Text Recognition.
+     *
+     * @param bitmap The bitmap to extract text from.
+     */
     fun extractTextFromImage(bitmap: Bitmap) {
         val image = InputImage.fromBitmap(bitmap, 0)
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
@@ -179,7 +222,11 @@ class MainViewModel : ViewModel() {
     }
 
 
-
+    /**
+     * Modifies the extracted text to identify and store vendor or inhouse information based on the current state.
+     *
+     * @param originalText The extracted text to modify.
+     */
     fun modifyText(originalText: String) {
         val lines = originalText.lines()
         // Keep the original regex but adjust it to account for lines that contain only the code.
@@ -228,6 +275,14 @@ class MainViewModel : ViewModel() {
             }
         }
     }
+
+    /**
+     * Calculates the highest match percentage between a code and a list of keywords.
+     *
+     * @param code The code to compare.
+     * @param keywords The list of keywords to compare against.
+     * @return The highest match percentage.
+     */
     private fun calculateHighestMatchPercentage(code: String, keywords: List<String>): Double {
         if (keywords.isEmpty()) return 0.0
 

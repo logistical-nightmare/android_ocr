@@ -47,12 +47,29 @@ import androidx.compose.material3.IconButton
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 
+/**
+ * Calculates the match percentage between two strings.
+ *
+ * @param str1 The first string to compare.
+ * @param str2 The second string to compare.
+ * @return The match percentage as an integer.
+ */
 fun calculateMatchPercentage(str1: String, str2: String): Int {
     val maxLength = maxOf(str1.length, str2.length)
     val matchLength = str1.zip(str2).count { it.first == it.second }
     return (matchLength.toDouble() / maxLength * 100).toInt()
 }
 
+/**
+ * A composable function that creates a clickable box with an icon.
+ *
+ * @param onClick The lambda to execute when the box is clicked.
+ * @param modifier Modifier to be applied to the box.
+ * @param backgroundColor The background color of the box.
+ * @param shape The shape of the box.
+ * @param iconSize The size of the icon inside the box.
+ * @param contentDescription Content description for the icon.
+ */
 @Composable
 fun ClickableBox(
     onClick: () -> Unit,
@@ -75,9 +92,18 @@ fun ClickableBox(
     }
 }
 
+/**
+ * The main activity class that handles camera permissions and sets the content view.
+ */
 @RequiresApi(Build.VERSION_CODES.O)
 class MainActivity : ComponentActivity() {
 
+    /**
+     * Called when the activity is starting. This is where most initialization should go.
+     *
+     * @param savedInstanceState If the activity is being re-initialized after previously being shut down,
+     *                           then this Bundle contains the data it most recently supplied in onSaveInstanceState(Bundle).
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!hasRequiredPermissions()) {
@@ -90,6 +116,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Composable function that handles text extraction and displays the UI.
+     *
+     * @param viewModel The ViewModel to use for this composable.
+     */
     @RequiresApi(Build.VERSION_CODES.O)
     @Composable
     fun TextExtraction(viewModel: MainViewModel = viewModel()) {
@@ -108,11 +139,8 @@ class MainActivity : ComponentActivity() {
         val state by viewModel.state.collectAsState()
         val noScanned by viewModel.noScanned.collectAsState()
 
-
         var matchPercentage by remember { mutableStateOf<Int>(0) }
         var backgroundColor by remember { mutableStateOf(Color.LightGray) }
-
-
 
         if (state == 3) {
             matchPercentage = calculateMatchPercentage(inhouse, vendor)
@@ -121,8 +149,7 @@ class MainActivity : ComponentActivity() {
                 matchPercentage in 80 until 100 -> Color.Yellow
                 else -> Color.Red
             }
-        }
-        else {
+        } else {
             matchPercentage = 0
             backgroundColor = Color.LightGray
         }
@@ -149,7 +176,6 @@ class MainActivity : ComponentActivity() {
             }
 
             Spacer(modifier = Modifier.height(50.dp))
-
 
             Box(
                 modifier = Modifier
@@ -189,13 +215,13 @@ class MainActivity : ComponentActivity() {
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column (
+                    Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                         modifier = Modifier.padding(1.dp)
-                    ){
+                    ) {
                         Text(text = "Vendor")
-                        if(tryAgain && state == 1) Text(text = "Try Again")
+                        if (tryAgain && state == 1) Text(text = "Try Again")
                         Text(text = vendor)
                     }
                 }
@@ -214,47 +240,45 @@ class MainActivity : ComponentActivity() {
                             else Color.Transparent
                         ),
                     contentAlignment = Alignment.Center
-
                 ) {
-                    Column (
+                    Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                         modifier = Modifier.padding(1.dp)
-                    ){
+                    ) {
                         Text(text = "Inhouse")
-                        if(tryAgain && state == 2) Text(text = "Try Again")
+                        if (tryAgain && state == 2) Text(text = "Try Again")
                         Text(text = inhouse)
                     }
                 }
             }
+
             Spacer(modifier = Modifier.height(12.dp))
 
-                Row() {
-                    Box(
-                        modifier = Modifier
-                            .width(200.dp)
-                            .height(60.dp)
-                            .padding(4.dp)
-                            .background(color = Color(0xFFADD8E6), shape = RoundedCornerShape(8.dp))
-                            .padding(8.dp)
-                    ) {
-                        Text(
-                            text = "Scanned: $noScanned",
-                            color = Color.Black,
-                            modifier = Modifier.align(Alignment.Center)
-                        )
-                    }
-
-                    ClickableBox(
-                        onClick = {
-                            viewModel.printMatchDataList()
-                            viewModel.shareMatchDataList(context)
-                        },
-                        contentDescription = "Share"
+            Row {
+                Box(
+                    modifier = Modifier
+                        .width(200.dp)
+                        .height(60.dp)
+                        .padding(4.dp)
+                        .background(color = Color(0xFFADD8E6), shape = RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "Scanned: $noScanned",
+                        color = Color.Black,
+                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
 
-
+                ClickableBox(
+                    onClick = {
+                        viewModel.printMatchDataList()
+                        viewModel.shareMatchDataList(context)
+                    },
+                    contentDescription = "Share"
+                )
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -262,14 +286,14 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
-            ){
+            ) {
                 Button(
                     onClick = {
                         viewModel.undoState()
                     },
                     modifier = Modifier.width(80.dp)
                 ) {
-                    Icon(Icons.Rounded.Undo , contentDescription = "Undo")
+                    Icon(Icons.Rounded.Undo, contentDescription = "Undo")
                 }
 
                 Button(
@@ -303,8 +327,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     if (isFlashlightOn) {
                         Icon(Icons.Rounded.FlashlightOn, contentDescription = "FlashLightOn")
-                    }
-                    else {
+                    } else {
                         Icon(Icons.Rounded.FlashlightOff, contentDescription = "FlashLightOff")
                     }
                 }
@@ -312,6 +335,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Takes a photo using the given camera controller and returns the bitmap.
+     *
+     * @param controller The camera controller to use for taking the photo.
+     * @param onPhotoTaken The lambda to execute when the photo is taken.
+     */
     private fun takePhoto(controller: LifecycleCameraController, onPhotoTaken: (Bitmap) -> Unit) {
         controller.takePicture(
             ContextCompat.getMainExecutor(this),
@@ -344,6 +373,11 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+    /**
+     * Checks if the app has the required permissions.
+     *
+     * @return True if all required permissions are granted, false otherwise.
+     */
     private fun hasRequiredPermissions(): Boolean {
         return CAMERAX_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(applicationContext, it) == PackageManager.PERMISSION_GRANTED
