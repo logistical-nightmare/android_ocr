@@ -54,9 +54,84 @@ class MainViewModel : ViewModel() {
     private val _noScanned = MutableStateFlow(0)
     val noScanned = _noScanned.asStateFlow()
 
+    private val _codes = MutableStateFlow<List<String>>(emptyList())
+    val codes = _codes.asStateFlow()
+
+    private val _hasMultipleCodes = MutableStateFlow(false)
+    val hasMultipleCodes = _hasMultipleCodes.asStateFlow()
+
     private val _matchDataList = MutableStateFlow<List<MatchData>>(emptyList())
     val matchDataList = _matchDataList.asStateFlow()
 
+    private fun clearCodes() {
+        _codes.value = emptyList()
+    }
+
+    fun getCodes(): List<String> {
+        return _codes.value
+    }
+
+    fun addCode(code: String) {
+        val updatedCodes = _codes.value.toMutableList().apply {
+            add(code)
+        }
+        _codes.value = updatedCodes
+    }
+
+    fun onCodeSelected(selectedCode: String) {
+        if(selectedCode.isNotEmpty()) {
+            if (_state.value == 1) {
+                if (selectedCode in _codes.value) {
+                    _state.value = 2
+                    _vendor.value = selectedCode
+                    _tryAgain.value = false
+
+                } else {
+                    _tryAgain.value = true
+                }
+            } else if (_state.value == 2) {
+                if (selectedCode in _codes.value) {
+                    _inhouse.value = selectedCode
+                    _state.value = 3
+                    _tryAgain.value = false
+                }
+                else {
+                    _tryAgain.value = true
+                }
+            }
+        }
+        else {
+            _tryAgain.value = true
+        }
+        _hasMultipleCodes.value = false
+    }
+
+    fun dismissCodeSelection() {
+        _tryAgain.value = true
+        _hasMultipleCodes.value = false
+    }
+
+    fun selectCode(index: Int) {
+        if (_state.value == 1) {
+            if (index in _codes.value.indices) {
+                _state.value = 2
+                _vendor.value = _codes.value[index]
+                _tryAgain.value = false
+
+            } else {
+                _tryAgain.value = true
+            }
+        } else if (_state.value == 2) {
+            if (index in _codes.value.indices) {
+                _inhouse.value = _codes.value[index]
+                _state.value = 3
+                _tryAgain.value = false
+            }
+             else {
+                _tryAgain.value = true
+            }
+        }
+    }
 
     /**
      * Adds a new match data entry with the current date and time.
@@ -84,6 +159,8 @@ class MainViewModel : ViewModel() {
         _matchDataList.value = currentList.toList()
 
     }
+
+
 
     /**
      * Prints the match data list to the console.
@@ -158,6 +235,7 @@ class MainViewModel : ViewModel() {
             _vendor.value = ""
             _inhouse.value = ""
             _state.value = 1
+            _hasMultipleCodes.value = false
         }
     }
 
@@ -208,6 +286,7 @@ class MainViewModel : ViewModel() {
     fun extractTextFromImage(bitmap: Bitmap) {
         val image = InputImage.fromBitmap(bitmap, 0)
         val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+        clearCodes()
 
         recognizer.process(image)
             .addOnSuccessListener { visionText ->
@@ -231,7 +310,7 @@ class MainViewModel : ViewModel() {
         val lines = originalText.lines()
         // Keep the original regex but adjust it to account for lines that contain only the code.
         val codeRegex = "(?:.*?:\\s*|\\s+)?(?=.*\\d)([\\w\\d-]{8,})\\b".toRegex()
-        var highestMatchPercentage = 0.0
+        var highestMatchPercentage = -1.0
         var bestMatch = ""
 
         val keywords = when (_state.value) {
@@ -244,6 +323,7 @@ class MainViewModel : ViewModel() {
             val matches = codeRegex.findAll(line.trim())
             for (match in matches) {
                 val code = match.groupValues[1]
+                addCode(code)
                 if (!code.any { it.isDigit() }) {
                     continue
                 }
@@ -257,21 +337,25 @@ class MainViewModel : ViewModel() {
             }
         }
 
-        if (_state.value == 1) {
-            _vendor.value = bestMatch
-            if (bestMatch.isNotEmpty()) {
-                _state.value = 2
-                _tryAgain.value = false
-            } else {
-                _tryAgain.value = true
-            }
-        } else if (_state.value == 2) {
-            _inhouse.value = bestMatch
-            if (bestMatch.isNotEmpty()) {
-                _state.value = 3
-                _tryAgain.value = false
-            } else {
-                _tryAgain.value = true
+        if(highestMatchPercentage < 10.0) _hasMultipleCodes.value = true
+
+        if (!_hasMultipleCodes.value) {
+            if (_state.value == 1) {
+                _vendor.value = bestMatch
+                if (bestMatch.isNotEmpty()) {
+                    _state.value = 2
+                    _tryAgain.value = false
+                } else {
+                    _tryAgain.value = true
+                }
+            } else if (_state.value == 2) {
+                _inhouse.value = bestMatch
+                if (bestMatch.isNotEmpty()) {
+                    _state.value = 3
+                    _tryAgain.value = false
+                } else {
+                    _tryAgain.value = true
+                }
             }
         }
     }

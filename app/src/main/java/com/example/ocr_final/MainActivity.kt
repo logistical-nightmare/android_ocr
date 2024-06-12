@@ -68,7 +68,7 @@ fun calculateMatchPercentage(str1: String, str2: String): Int {
  * @param backgroundColor The background color of the box.
  * @param shape The shape of the box.
  * @param iconSize The size of the icon inside the box.
- * @param contentDescription Content description for the icon.
+ * @param contentDescription Content description for the icon.S
  */
 @Composable
 fun ClickableBox(
@@ -91,6 +91,38 @@ fun ClickableBox(
         Icon(Icons.Default.IosShare, contentDescription = contentDescription, modifier = Modifier.size(iconSize))
     }
 }
+
+@Composable
+fun CodeSelectionDialog(
+    codes: List<String>,
+    onCodeSelected: (String) -> Unit,
+    onDismissRequest: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text(text = "Select Code") },
+        text = {
+            Column {
+                codes.forEach { code ->
+                    Text(
+                        text = code,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onCodeSelected(code) }
+                            .padding(8.dp)
+                            .background(color = Color(0xFFADD8E6))
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onDismissRequest) {
+                Text(text = "Cancel")
+            }
+        }
+    )
+}
+
 
 /**
  * The main activity class that handles camera permissions and sets the content view.
@@ -138,6 +170,8 @@ class MainActivity : ComponentActivity() {
         var isFlashlightOn by remember { mutableStateOf(false) }
         val state by viewModel.state.collectAsState()
         val noScanned by viewModel.noScanned.collectAsState()
+        val hasMultipleCodes by viewModel.hasMultipleCodes.collectAsState()
+
 
         var matchPercentage by remember { mutableStateOf<Int>(0) }
         var backgroundColor by remember { mutableStateOf(Color.LightGray) }
@@ -153,6 +187,7 @@ class MainActivity : ComponentActivity() {
             matchPercentage = 0
             backgroundColor = Color.LightGray
         }
+
 
         Column(
             modifier = Modifier
@@ -333,6 +368,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+        if (hasMultipleCodes) {
+            CodeSelectionDialog(
+                codes = viewModel.getCodes(),
+                onCodeSelected = { selectedCode ->
+                    viewModel.onCodeSelected(selectedCode)
+                },
+                onDismissRequest = {
+                    viewModel.dismissCodeSelection()
+                }
+            )
+        }
     }
 
     /**
@@ -373,6 +419,7 @@ class MainActivity : ComponentActivity() {
         )
     }
 
+
     /**
      * Checks if the app has the required permissions.
      *
@@ -390,4 +437,5 @@ class MainActivity : ComponentActivity() {
             Manifest.permission.RECORD_AUDIO,
         )
     }
+
 }
