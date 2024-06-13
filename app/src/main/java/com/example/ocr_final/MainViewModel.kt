@@ -337,7 +337,7 @@ class MainViewModel : ViewModel() {
             }
         }
 
-        if(highestMatchPercentage < 10.0) _hasMultipleCodes.value = true
+        if(highestMatchPercentage < 10.0 && _codes.value.size>1) _hasMultipleCodes.value = true
 
         if (!_hasMultipleCodes.value) {
             if (_state.value == 1) {
