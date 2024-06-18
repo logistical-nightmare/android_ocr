@@ -78,6 +78,11 @@ class MainViewModel : ViewModel() {
         _codes.value = updatedCodes
     }
 
+    /**
+     * Enables selecting of code when multiple codes are detected
+     * Sets the selected code into the Vendor or Inhouse Label
+     * @param selectedCode selected code from the array
+     */
     fun onCodeSelected(selectedCode: String) {
         if(selectedCode.isNotEmpty()) {
             if (_state.value == 1) {
@@ -106,11 +111,19 @@ class MainViewModel : ViewModel() {
         _hasMultipleCodes.value = false
     }
 
+    /**
+     * Activated when the code selected popup is dismissed
+     */
     fun dismissCodeSelection() {
         _tryAgain.value = true
         _hasMultipleCodes.value = false
     }
 
+    /**
+    * Enables selecting of code when multiple codes are detected
+     * Sets the selected code into the Vendor or Inhouse Label
+     * @param index index of the selected code from the array
+     */
     fun selectCode(index: Int) {
         if (_state.value == 1) {
             if (index in _codes.value.indices) {
@@ -134,10 +147,10 @@ class MainViewModel : ViewModel() {
     }
 
     /**
-     * Adds a new match data entry with the current date and time.
+     * Adds code to the match list data to be exported as csv later
      *
-     * @param vendor The vendor information.
-     * @param inhouse The inhouse information.
+     * @param vendor vendor code of the match
+     * @param inhouse inhouse code of the ,atch
      */
     @RequiresApi(Build.VERSION_CODES.O)
     fun addToMatchDataList(vendor: String, inhouse: String) {
