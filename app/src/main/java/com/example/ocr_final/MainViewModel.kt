@@ -48,7 +48,7 @@ class MainViewModel : ViewModel() {
     private val _tryAgain = MutableStateFlow(false)
     val tryAgain = _tryAgain.asStateFlow()
 
-    private val _state = MutableStateFlow(1)
+    private val _state = MutableStateFlow("Capture Vendor")
     val state = _state.asStateFlow()
 
     private val _noScanned = MutableStateFlow(0)
@@ -85,19 +85,19 @@ class MainViewModel : ViewModel() {
      */
     fun onCodeSelected(selectedCode: String) {
         if(selectedCode.isNotEmpty()) {
-            if (_state.value == 1) {
+            if (_state.value == "Capture Vendor") {
                 if (selectedCode in _codes.value) {
-                    _state.value = 2
+                    _state.value = "Capture Inhouse"
                     _vendor.value = selectedCode
                     _tryAgain.value = false
 
                 } else {
                     _tryAgain.value = true
                 }
-            } else if (_state.value == 2) {
+            } else if (_state.value == "Capture Inhouse") {
                 if (selectedCode in _codes.value) {
                     _inhouse.value = selectedCode
-                    _state.value = 3
+                    _state.value = "Show Match Percentage"
                     _tryAgain.value = false
                 }
                 else {
@@ -125,19 +125,19 @@ class MainViewModel : ViewModel() {
      * @param index index of the selected code from the array
      */
     fun selectCode(index: Int) {
-        if (_state.value == 1) {
+        if (_state.value == "Capture Vendor") {
             if (index in _codes.value.indices) {
-                _state.value = 2
+                _state.value = "Capture Inhouse"
                 _vendor.value = _codes.value[index]
                 _tryAgain.value = false
 
             } else {
                 _tryAgain.value = true
             }
-        } else if (_state.value == 2) {
+        } else if (_state.value == "Capture Inhouse") {
             if (index in _codes.value.indices) {
                 _inhouse.value = _codes.value[index]
-                _state.value = 3
+                _state.value = "Show Match Percentage"
                 _tryAgain.value = false
             }
              else {
@@ -247,7 +247,7 @@ class MainViewModel : ViewModel() {
         viewModelScope.launch {
             _vendor.value = ""
             _inhouse.value = ""
-            _state.value = 1
+            _state.value = "Capture Vendor"
             _hasMultipleCodes.value = false
         }
     }
@@ -267,14 +267,14 @@ class MainViewModel : ViewModel() {
     fun undoState() {
         viewModelScope.launch(){
 
-            if (_state.value == 2) {
+            if (_state.value == "Capture Inhouse") {
                 _vendor.value = ""
-                _state.value -= 1
+                _state.value = "Capture Vendor"
                 _tryAgain.value = false
             }
-            else if (_state.value== 3) {
+            else if (_state.value== "Show Match Percentage") {
                 _inhouse.value = ""
-                _state.value -= 1
+                _state.value = "Capture Inhouse"
                 _tryAgain.value = false
             }
         }
@@ -327,8 +327,8 @@ class MainViewModel : ViewModel() {
         var bestMatch = ""
 
         val keywords = when (_state.value) {
-            1 -> listOf("batch", "lot", "p.o.")
-            2 -> listOf("vend")
+            "Capture Vendor" -> listOf("batch", "lot", "p.o.")
+            "Capture Inhouse" -> listOf("vend")
             else -> listOf("")
         }
 
@@ -353,18 +353,18 @@ class MainViewModel : ViewModel() {
         if(highestMatchPercentage < 10.0 && _codes.value.size>1) _hasMultipleCodes.value = true
 
         if (!_hasMultipleCodes.value) {
-            if (_state.value == 1) {
+            if (_state.value == "Capture Vendor") {
                 _vendor.value = bestMatch
                 if (bestMatch.isNotEmpty()) {
-                    _state.value = 2
+                    _state.value = "Capture Inhouse"
                     _tryAgain.value = false
                 } else {
                     _tryAgain.value = true
                 }
-            } else if (_state.value == 2) {
+            } else if (_state.value == "Capture Inhouse") {
                 _inhouse.value = bestMatch
                 if (bestMatch.isNotEmpty()) {
-                    _state.value = 3
+                    _state.value = "Show Match Percentage"
                     _tryAgain.value = false
                 } else {
                     _tryAgain.value = true

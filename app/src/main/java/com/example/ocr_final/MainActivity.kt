@@ -176,7 +176,7 @@ class MainActivity : ComponentActivity() {
         var matchPercentage by remember { mutableStateOf<Int>(0) }
         var backgroundColor by remember { mutableStateOf(Color.LightGray) }
 
-        if (state == 3) {
+        if (state == "Show Match Percentage") {
             matchPercentage = calculateMatchPercentage(inhouse, vendor)
             backgroundColor = when {
                 matchPercentage == 100 -> Color.Green
@@ -218,8 +218,8 @@ class MainActivity : ComponentActivity() {
                     .height(60.dp)
                     .background(backgroundColor)
                     .border(
-                        if (state == 3) 4.dp else 0.dp,
-                        if (state == 3) Color.Blue else Color.Transparent
+                        if (state == "Show Match Percentage") 4.dp else 0.dp,
+                        if (state == "Show Match Percentage") Color.Blue else Color.Transparent
                     )
             ) {
                 Column(
@@ -243,9 +243,9 @@ class MainActivity : ComponentActivity() {
                         .height(50.dp)
                         .background(Color.LightGray)
                         .border(
-                            if (state == 1) 4.dp else 0.dp,
-                            if (state == 1 && tryAgain) Color.Red
-                            else if (state == 1) Color.Blue
+                            if (state == "Capture Vendor") 4.dp else 0.dp,
+                            if (state == "Capture Vendor" && tryAgain) Color.Red
+                            else if (state == "Capture Vendor") Color.Blue
                             else Color.Transparent
                         ),
                     contentAlignment = Alignment.Center
@@ -256,7 +256,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(1.dp)
                     ) {
                         Text(text = "Vendor")
-                        if (tryAgain && state == 1) Text(text = "Try Again")
+                        if (tryAgain && state == "Capture Vendor") Text(text = "Try Again")
                         Text(text = vendor)
                     }
                 }
@@ -269,9 +269,9 @@ class MainActivity : ComponentActivity() {
                         .height(50.dp)
                         .background(Color.LightGray)
                         .border(
-                            if (state == 2) 4.dp else 0.dp,
-                            if (state == 2 && tryAgain) Color.Red
-                            else if (state == 2) Color.Blue
+                            if (state == "Capture Inhouse") 4.dp else 0.dp,
+                            if (state == "Capture Inhouse" && tryAgain) Color.Red
+                            else if (state == "Capture Inhouse") Color.Blue
                             else Color.Transparent
                         ),
                     contentAlignment = Alignment.Center
@@ -282,7 +282,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(1.dp)
                     ) {
                         Text(text = "Inhouse")
-                        if (tryAgain && state == 2) Text(text = "Try Again")
+                        if (tryAgain && state == "Capture Inhouse") Text(text = "Try Again")
                         Text(text = inhouse)
                     }
                 }
@@ -333,7 +333,7 @@ class MainActivity : ComponentActivity() {
 
                 Button(
                     onClick = {
-                        if (state == 3) {
+                        if (state == "Show Match Percentage") {
                             viewModel.resetVendorAndInhouse()
                             if (matchPercentage >= 80) {
                                 viewModel.addNoScanned()
