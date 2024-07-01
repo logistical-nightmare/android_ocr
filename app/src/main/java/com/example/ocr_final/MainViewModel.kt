@@ -18,6 +18,7 @@ import java.io.File
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
+import com.example.ocr_final.Constants
 
 
 
@@ -322,13 +323,13 @@ class MainViewModel : ViewModel() {
     fun modifyText(originalText: String) {
         val lines = originalText.lines()
         // Keep the original regex but adjust it to account for lines that contain only the code.
-        val codeRegex = "(?:.*?:\\s*|\\s+)?(?=.*\\d)([\\w\\d-]{8,})\\b".toRegex()
+        val codeRegex = Constants.REGEX.toRegex() //regex pattern from constants file
         var highestMatchPercentage = -1.0
         var bestMatch = ""
 
         val keywords = when (_state.value) {
-            "Capture Vendor" -> listOf("batch", "lot", "p.o.")
-            "Capture Inhouse" -> listOf("vend")
+            "Capture Vendor" -> Constants.vend_list
+            "Capture Inhouse" -> Constants.inhouse_list
             else -> listOf("")
         }
 
